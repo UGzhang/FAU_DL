@@ -1,6 +1,6 @@
 
 class Sgd:
-    def __int__(self, lr):
+    def __init__(self, lr:float):
         self.lr = lr
 
     def calculate_update(self, weight_tensor, gradient_tensor):
