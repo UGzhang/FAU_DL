@@ -1,4 +1,6 @@
 import copy
+
+
 class NeuralNetwork:
     def __init__(self, optimizer):
         self.optimizer = optimizer
@@ -6,16 +8,20 @@ class NeuralNetwork:
         self.layers = []
         self.data_layer = None
         self.loss_layer = None
-
         self.input_tensor = None
         self.label_tensor = None
 
+    '''
+        1.fully connected
+        2.relu
+        3.fully connected
+        4.softmax
+    '''
     def forward(self):
         self.input_tensor, self.label_tensor = self.data_layer.next()
         for layer in self.layers:
             self.input_tensor = layer.forward(self.input_tensor)
-        loss = self.loss_layer.forward(self.input_tensor, self.label_tensor)
-        return loss
+        return self.loss_layer.forward(self.input_tensor, self.label_tensor)
 
     def backward(self):
         error_tensor = self.loss_layer.backward(self.label_tensor)

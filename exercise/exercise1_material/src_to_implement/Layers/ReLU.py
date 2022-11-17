@@ -15,7 +15,7 @@ class ReLU(BaseLayer):
         return self._x
 
     '''
-    En = x > 0 ? En : 0
+    En-1 = x > 0 ? En : 0
     '''
     def backward(self, error_tensor):
         return 1 * (self._x > 0) * error_tensor

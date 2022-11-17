@@ -13,7 +13,7 @@ class CrossEntropyLoss:
         return -np.sum(label_tensor * np.log(self._y + np.finfo(float).eps))
 
     '''
-    En = -y / (y_hat + ε)
+    En-1 = -y / (y_hat + ε)
     '''
     def backward(self, label_tensor):
         return - (label_tensor / (self._y + np.finfo(float).eps))
