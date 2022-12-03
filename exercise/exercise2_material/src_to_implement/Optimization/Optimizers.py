@@ -18,7 +18,7 @@ class SgdWithMomentum:
         self.__v = 0
 
     def calculate_update(self, weight_tensor, gradient_tensor):
-        self.__v = self.__learning_rate * self.__v - self.__learning_rate * gradient_tensor
+        self.__v = self.__momentum_rate * self.__v - self.__learning_rate * gradient_tensor
         return weight_tensor + self.__v
 
 
