@@ -31,8 +31,8 @@ class Tool:
         f_h, f_w = filter[0], filter[1]
         s_h, s_w = stride[0], stride[1]
 
-        out_h = (H - f_w) // s_h + 1
-        out_w = (W - f_h) // s_w + 1
+        out_h = (H - f_h) // s_h + 1
+        out_w = (W - f_w) // s_w + 1
 
         col = np.zeros((N, C, f_h, f_w, out_h, out_w))
 
