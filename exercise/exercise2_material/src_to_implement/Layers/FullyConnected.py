@@ -7,17 +7,17 @@ class FullyConnected(BaseLayer):
         super().__init__()
         self.trainable = True
 
-        self.weight = np.random.uniform(size=(input_size, output_size))
+        self.weights = np.random.uniform(size=(input_size, output_size))
         self.bias = np.ones(output_size)
-        self.weights = np.vstack((self.weight, self.bias))  # cols concat
+        self.weights = np.vstack((self.weights, self.bias))  # cols concat
 
         self.gradient_weights = None
         self._optimizer = None
         self._x = None
 
         # add in ex2
-        self._input_size = input_size
-        self._output_size = output_size
+        self.__input_size = input_size
+        self.__output_size = output_size
 
     '''
     y_hat = X * W
@@ -34,7 +34,7 @@ class FullyConnected(BaseLayer):
         self.gradient_weights = np.matmul(self._x.T, error_tensor)
         if self._optimizer is not None:
             self.weights = self._optimizer.calculate_update(self.weights, self.gradient_weights)
-        return np.dot(error_tensor, self.weight.T)
+        return np.dot(error_tensor, self.weights.T[:,:-1])
 
     @property
     def optimizer(self):
@@ -46,5 +46,5 @@ class FullyConnected(BaseLayer):
 
     # add in ex2
     def initialize(self, weights_initializer, bias_initializer):
-        self.weight = weights_initializer.initialize(self.weights.shape, self._input_size, self._output_size)
-        self.bias = bias_initializer.initialize(self.weights.shape, self._input_size, self._output_size)
+        self.weights = weights_initializer.initialize(self.weights.shape, self.__input_size, self.__output_size)
+        self.bias = bias_initializer.initialize(self.weights.shape, self.__input_size, self.__output_size)

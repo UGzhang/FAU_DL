@@ -45,8 +45,10 @@ class Conv(BaseLayer):
         # SAME padding
         pad_h1 = int(math.floor((filter_h - 1) / 2))
         pad_h2 = int(math.ceil((filter_h - 1) / 2))
+
         pad_w1 = int(math.floor((filter_w - 1) / 2))
         pad_w2 = int(math.ceil((filter_w - 1) / 2))
+
         input_tensor = np.pad(input_tensor, ((0, 0), (0, 0), (pad_h1, pad_h2), (pad_w1, pad_w2)), 'constant', constant_values=0)
 
         batch, channels, height, width = input_tensor.shape
@@ -70,6 +72,10 @@ class Conv(BaseLayer):
         return self.output
 
     def backward(self, error_tensor):
+
+        if self._Conv1D:
+            error_tensor = np.expand_dims(error_tensor, axis=3)
+
         error_tensor = error_tensor.transpose(0, 2, 3, 1).reshape(-1, self.num_ker)
 
         self.gradient_weights = np.dot(self.input_col.T, error_tensor)
@@ -80,6 +86,9 @@ class Conv(BaseLayer):
         dcol = np.dot(error_tensor, self.weight_col.T)
         dx = Tool().col2im(dcol, self._input_shape, [filter_h,filter_w], [self.stri_h, self.stri_w])
 
+        if self._Conv1D:
+            dx = np.squeeze(dx, axis=3)
+
         if self._optimizer is not None:
             self.weights = self._optimizer.calculate_update(self.weights, self.gradient_weights)
             self.bias = self._optimizer.calculate_update(self.bias, self.gradient_bias)
@@ -87,8 +96,8 @@ class Conv(BaseLayer):
 
     def initialize(self, weights_initializer, bias_initializer):
         self.weights = weights_initializer.initialize(self.weights.shape, np.prod(self.convolution_shape),
-                                                      np.prod(self.convolution_shape[1:]) * self.num_kernels)
-        self.bias = bias_initializer.initialize(self.bias.shape, 1, self.num_kernels)
+                                                      np.prod(self.convolution_shape[1:]) * self.num_ker)
+        self.bias = bias_initializer.initialize(self.bias.shape, 1, self.num_ker)
 
 
     @property

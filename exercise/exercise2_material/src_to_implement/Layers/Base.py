@@ -1,4 +1,6 @@
 import numpy as np
+import math
+
 class BaseLayer:
     def __init__(self):
         self.trainable = False
@@ -63,15 +65,20 @@ class Tool:
         f_h, f_w = filter[0], filter[1]
         s_h, s_w = stride[0], stride[1]
 
-        out_h = (H - f_w) // s_h + 1
-        out_w = (W - f_h) // s_w + 1
+        pad_h1 = int(math.floor((f_h - 1) / 2))
+        pad_h2 = int(math.ceil((f_h - 1) / 2))
+        pad_w1 = int(math.floor((f_w - 1) / 2))
+        pad_w2 = int(math.ceil((f_w - 1) / 2))
+
+        out_h = (H + pad_h1 + pad_h2 - f_h) // s_h + 1
+        out_w = (W + pad_w1 + pad_w2 - f_w) // s_w + 1
 
         # print("reshape = ", N, ",",out_h, ",",out_w, ",",C, ",",filter_h, ",",filter_w)
 
         col = col.reshape(N, out_h, out_w, C, f_h, f_w).transpose(0, 3, 4, 5, 1, 2)
 
         # add the padding to image
-        img = np.zeros((N, C, H, W))
+        img = np.zeros((N, C, H + pad_h1 + pad_h2 + s_h - 1, W + pad_w1 + pad_w2 + s_w - 1))
 
         for y in range(f_h):
             y_max = y + s_h * out_h
@@ -79,6 +86,6 @@ class Tool:
                 x_max = x + s_w * out_w
                 img[:, :, y:y_max:s_h, x:x_max:s_w] += col[:, :, y, x, :, :]
 
-        return img
+        return img[:, :, pad_h1:H + pad_h1, pad_w1:W + pad_w1]
 
 
