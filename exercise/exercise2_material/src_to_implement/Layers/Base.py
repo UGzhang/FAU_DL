@@ -59,21 +59,21 @@ class Tool:
             stride size
             2-D [height,width]
     '''
-    def col2im(self, col, input_shape, filter, stride):
+    def col2im(self, col, input_shape, filter, stride, isPooling=False):
 
         N, C, H, W = input_shape
         f_h, f_w = filter[0], filter[1]
         s_h, s_w = stride[0], stride[1]
-
-        pad_h1 = int(math.floor((f_h - 1) / 2))
-        pad_h2 = int(math.ceil((f_h - 1) / 2))
-        pad_w1 = int(math.floor((f_w - 1) / 2))
-        pad_w2 = int(math.ceil((f_w - 1) / 2))
+        if not isPooling:
+            pad_h1 = int(math.floor((f_h - 1) / 2))
+            pad_h2 = int(math.ceil((f_h - 1) / 2))
+            pad_w1 = int(math.floor((f_w - 1) / 2))
+            pad_w2 = int(math.ceil((f_w - 1) / 2))
+        else:
+            pad_h1 = pad_h2 = pad_w1 = pad_w2 = 0
 
         out_h = (H + pad_h1 + pad_h2 - f_h) // s_h + 1
         out_w = (W + pad_w1 + pad_w2 - f_w) // s_w + 1
-
-        # print("reshape = ", N, ",",out_h, ",",out_w, ",",C, ",",filter_h, ",",filter_w)
 
         col = col.reshape(N, out_h, out_w, C, f_h, f_w).transpose(0, 3, 4, 5, 1, 2)
 

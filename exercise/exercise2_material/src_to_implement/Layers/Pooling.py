@@ -49,6 +49,6 @@ class Pooling(BaseLayer):
         dmax = dmax.reshape(error_tensor.shape + (pool_size,))
 
         err_col = dmax.reshape(dmax.shape[0] * dmax.shape[1] * dmax.shape[2], -1)
-        next_err = Tool().col2im(err_col, self._input_shape, self._pooling_size, self._stride_size)
+        next_err = Tool().col2im(err_col, self._input_shape, self._pooling_size, self._stride_size, True)
 
         return next_err
