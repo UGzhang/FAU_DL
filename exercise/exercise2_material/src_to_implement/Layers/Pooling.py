@@ -28,7 +28,9 @@ class Pooling(BaseLayer):
         # get the position of max value
         self._pos_max = np.argmax(input_col, axis=1)
 
+        # find the max value in a row
         output = np.max(input_col, axis=1)
+
         # new shape (N, C, out_h, out_w)
         output = output.reshape(N, out_h, out_w, C).transpose(0, 3, 1, 2)
 
@@ -37,18 +39,17 @@ class Pooling(BaseLayer):
     def backward(self, error_tensor):
 
         error_tensor = error_tensor.transpose(0, 2, 3, 1)
-        # pool_size is Pool_h*Pool_w
+
         pool_size = self._pooling_size[0] * self._pooling_size[1]
 
-        # init max value matrix
-        dmax = np.zeros((error_tensor.size, pool_size))
+        err_max = np.zeros((error_tensor.size, pool_size))
         # put the max value back to its position; pos_max.shape = (N*out_h*out_w, 1)
-        dmax[np.arange(self._pos_max.size), self._pos_max.flatten()] = error_tensor.flatten()
+        err_max[np.arange(self._pos_max.size), self._pos_max.flatten()] = error_tensor.flatten()
 
-        # dmax.shape = (N, H, W, C, Pool_h*Pool_w)
-        dmax = dmax.reshape(error_tensor.shape + (pool_size,))
+        # err_max.shape = (N, H, W, C, Pool_h*Pool_w)
+        err_max = err_max.reshape(error_tensor.shape + (pool_size,))
 
-        err_col = dmax.reshape(dmax.shape[0] * dmax.shape[1] * dmax.shape[2], -1)
+        err_col = err_max.reshape(err_max.shape[0] * err_max.shape[1] * err_max.shape[2], -1)
         next_err = Tool().col2im(err_col, self._input_shape, self._pooling_size, self._stride_size, True)
 
         return next_err

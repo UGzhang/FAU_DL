@@ -12,8 +12,8 @@ class NeuralNetwork:
         self.label_tensor = None
 
         # add in ex2
-        self.__weights_initializer = copy.deepcopy(weights_initializer)
-        self.__bias_initializer = copy.deepcopy(bias_initializer)
+        self._weights_initializer = copy.deepcopy(weights_initializer)
+        self._bias_initializer = copy.deepcopy(bias_initializer)
 
     '''
         1.fully connected
@@ -36,7 +36,7 @@ class NeuralNetwork:
     def append_layer(self, layer):
         if layer.trainable:
             # add in ex2
-            layer.initialize(self.__weights_initializer, self.__bias_initializer)
+            layer.initialize(self._weights_initializer, self._bias_initializer)
             layer.optimizer = copy.deepcopy(self.optimizer)
         self.layers.append(layer)
 
