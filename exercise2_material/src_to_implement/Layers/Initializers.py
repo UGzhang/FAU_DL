@@ -23,6 +23,7 @@ class Xavier:
         pass
 
     def initialize(self, weights_shape, fan_in, fan_out):
+        # Zero-mean Gaussian
         return np.random.normal(0, math.sqrt(2/(fan_in+fan_out)), size=weights_shape)
 
 
@@ -31,4 +32,5 @@ class He:
         pass
 
     def initialize(self, weights_shape, fan_in, fan_out):
+        # Zero-mean Gaussian
         return np.random.normal(0, math.sqrt(2/fan_in), size=weights_shape)

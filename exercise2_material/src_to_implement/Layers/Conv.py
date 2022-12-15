@@ -76,7 +76,7 @@ class Conv(BaseLayer):
         self.gradient_weights = np.dot(self._img_col.T, error_tensor)
         self.gradient_weights = self.gradient_weights.transpose(1, 0).reshape(self.weights.shape)
 
-        self.gradient_bias = np.sum(error_tensor, axis=0)
+        self.gradient_bias = np.sum(error_tensor, axis=0)  # add every row
 
         err_col = np.dot(error_tensor, self._weight_col.T)
 

@@ -15,7 +15,7 @@ class SgdWithMomentum:
     def __init__(self, lr, mr):
         self._lr = lr
         self._mr = mr  # momentum rate
-        self._v = 0
+        self._v = 0  # the previous gradient
 
     def calculate_update(self, weight_tensor, gradient_tensor):
         self._v = self._mr * self._v - self._lr * gradient_tensor
