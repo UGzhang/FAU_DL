@@ -1,5 +1,5 @@
 import numpy as np
-
+from Optimization.Constraints import L1_Regularizer, L2_Regularizer
 
 # add by ex3
 class Optimizer:
@@ -13,10 +13,13 @@ class Optimizer:
 class Sgd(Optimizer):
     def __init__(self, lr: float):
         super().__init__()
-        self.lr = lr
+        self._lr = lr
 
     def calculate_update(self, weight_tensor, gradient_tensor):
-        return weight_tensor - self.lr * gradient_tensor
+        if self.regularizer is not None:
+            return weight_tensor - self._lr * self.regularizer.calculate_gradient(weight_tensor) - self._lr * gradient_tensor
+        else:
+            return weight_tensor - self._lr * gradient_tensor
 
 
 class SgdWithMomentum(Optimizer):
@@ -28,7 +31,10 @@ class SgdWithMomentum(Optimizer):
 
     def calculate_update(self, weight_tensor, gradient_tensor):
         self._v = self._mr * self._v - self._lr * gradient_tensor
-        return weight_tensor + self._v
+        if self.regularizer is not None:
+            return weight_tensor + self._v - self._lr * self.regularizer.calculate_gradient(weight_tensor)
+        else:
+            return weight_tensor + self._v
 
 
 class Adam(Optimizer):
@@ -48,4 +54,7 @@ class Adam(Optimizer):
         r_hat = self._r / (1 - self._rho ** self._k)
         w = weight_tensor - self._lr * (v_hat / (np.sqrt(r_hat) + np.finfo(float).eps))
         self._k += 1
-        return w
+        if self.regularizer is not None:
+            return w - self._lr * self.regularizer.calculate_gradient(weight_tensor)
+        else:
+            return w

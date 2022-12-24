@@ -1,4 +1,3 @@
-import math
 
 import numpy as np
 import copy
@@ -11,9 +10,12 @@ class BatchNormalization(BaseLayer):
         super().__init__()
         self.trainable = True
         self.channels = channels
+
         self.bias = None
         self.weights = None
 
+        self.gradient_bias = None
+        self.gradient_weights = None
         self.mean = None
         self.variance = None
 
@@ -26,6 +28,8 @@ class BatchNormalization(BaseLayer):
 
         self.input_shape = None
 
+        self.initialize()  # initial weights and biasv
+
     def initialize(self):
         self.weights = np.ones(self.channels)
         self.bias = np.zeros(self.channels)
@@ -33,7 +37,7 @@ class BatchNormalization(BaseLayer):
     def forward(self, input_tensor):
         self.input_shape = input_tensor.shape
         X = input_tensor
-        if self.input_shape.ndim == 4:
+        if len(self.input_shape) == 4:
             X = self.reformat(X)
         self.X = X
         # test
@@ -50,9 +54,9 @@ class BatchNormalization(BaseLayer):
             else:
                 self.moving_mean = self.decay * self.moving_mean + (1 - self.decay) * self.mean
                 self.moving_variance = self.decay * self.moving_variance + (1 - self.decay) * self.variance
-        self.x_hat = (X - self.mean) / (math.sqrt(self.variance + np.finfo(float).eps))
+        self.x_hat = (X - self.mean) / (np.sqrt(self.variance + np.finfo(float).eps))
         Y = self.weights * self.x_hat + self.bias
-        if self.input_shape.ndim == 4:
+        if len(self.input_shape) == 4:
             Y = self.reformat(Y)
         return Y
 
@@ -60,13 +64,13 @@ class BatchNormalization(BaseLayer):
         E = error_tensor
         if E.ndim == 4:
             E = self.reformat(E)
-        grad_weights = np.sum(E * self.x_hat, axis=0)
-        grad_bias = np.sum(E, axis=0)
+        self.gradient_weights = np.sum(E * self.x_hat, axis=0)
+        self.gradient_bias = np.sum(E, axis=0)
         grad_input = compute_bn_gradients(E, self.X, self.weights, self.mean, self.variance)
         if self._optimizer is not None:
-            self._optimizer.weights.calculate_update(self.weights, grad_weights)
-            self._optimizer.bias.calculate_update(self.bias, grad_bias)
-        if self.input_shape.ndim == 4:
+            self.weights = self._optimizer.weights.calculate_update(self.weights, self.gradient_weights)
+            self.bias = self._optimizer.bias.calculate_update(self.bias, self.gradient_bias)
+        if len(self.input_shape) == 4:
             grad_input = self.reformat(grad_input)
         return grad_input
 

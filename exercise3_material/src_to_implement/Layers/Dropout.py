@@ -9,10 +9,12 @@ class Dropout(BaseLayer):
         self.mask = None
 
     def forward(self, input_tensor):
+        # test
         if self.testing_phase:
-            return input_tensor * (1.0 - self.prob)
+            return input_tensor
+        # train
         else:
-            self.mask = np.random.rand(*input_tensor) > self.prob
+            self.mask = (np.random.rand(*input_tensor.shape) < self.prob) / self.prob
             return input_tensor * self.mask
 
     def backward(self, error_tensor):
