@@ -8,10 +8,12 @@ class RNN(BaseLayer):
         super().__init__()
         self.trainable = True
 
+        self.input_size = input_size
+        self.hidden_state = hidden_size
+        self.output_size = output_size
+
         self.hidden_state = np.zeros(hidden_size)
         self.memorize = False
-
-        self.input_size = input_size
 
         self.weights = None
         self.bias = None
