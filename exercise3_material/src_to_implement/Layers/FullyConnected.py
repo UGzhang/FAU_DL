@@ -13,25 +13,25 @@ class FullyConnected(BaseLayer):
 
         self.gradient_weights = None
         self._optimizer = None
-        self._x = None
+        self.input_tensor = None
 
         # add in ex2
-        self.__input_size = input_size
-        self.__output_size = output_size
+        self._input_size = input_size
+        self._output_size = output_size
 
     '''
     y_hat = X * W
     '''
     def forward(self, input_tensor):
         # x concat cols of 1
-        self._x = np.c_[input_tensor, np.ones(input_tensor.shape[0])]
-        return np.matmul(self._x, self.weights)
+        self.input_tensor = np.c_[input_tensor, np.ones(input_tensor.shape[0])]
+        return np.matmul(self.input_tensor, self.weights)
 
     '''
     En-1 = En * W.T
     '''
     def backward(self, error_tensor):
-        self.gradient_weights = np.matmul(self._x.T, error_tensor)
+        self.gradient_weights = np.matmul(self.input_tensor.T, error_tensor)
         if self._optimizer is not None:
             self.weights = self._optimizer.calculate_update(self.weights, self.gradient_weights)
         return np.dot(error_tensor, self.weights.T[:,:-1])
@@ -46,5 +46,5 @@ class FullyConnected(BaseLayer):
 
     # add in ex2
     def initialize(self, weights_initializer, bias_initializer):
-        self.weights = weights_initializer.initialize(self.weights.shape, self.__input_size, self.__output_size)
-        self.bias = bias_initializer.initialize(self.weights.shape, self.__input_size, self.__output_size)
+        self.weights = weights_initializer.initialize(self.weights.shape, self._input_size, self._output_size)
+        self.bias = bias_initializer.initialize(self.weights.shape, self._input_size, self._output_size)
