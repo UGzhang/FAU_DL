@@ -11,8 +11,8 @@ class BatchNormalization(BaseLayer):
         self.trainable = True
         self.channels = channels
 
-        self.bias = None
-        self.weights = None
+        self.bias = np.zeros(self.channels)
+        self.weights = np.ones(self.channels)
 
         self.gradient_bias = None
         self.gradient_weights = None
@@ -28,11 +28,9 @@ class BatchNormalization(BaseLayer):
 
         self.input_shape = None
 
-        self.initialize()  # initial weights and biasv
-
-    def initialize(self):
-        self.weights = np.ones(self.channels)
-        self.bias = np.zeros(self.channels)
+    def initialize(self, weights_initializer, bias_initializer):
+        self.bias = bias_initializer.initialize(self.channels)
+        self.weights = weights_initializer.initialize(self.channels, self.channels, self.channels)
 
     def forward(self, input_tensor):
         self.input_shape = input_tensor.shape

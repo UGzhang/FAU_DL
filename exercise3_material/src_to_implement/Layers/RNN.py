@@ -1,105 +1,111 @@
 import numpy as np
 import copy
-from Layers import Base
-from Layers.FullyConnected import FullyConnected
-from Layers.TanH import TanH
+from Layers.Base import BaseLayer
 from Layers.Sigmoid import Sigmoid
+from Layers.TanH import TanH
+from Layers.FullyConnected import FullyConnected
 
 
-class RNN(Base.BaseLayer):
+class RNN(BaseLayer):
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
         self.trainable = True
-        self._memorize = False
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size
-        self.FC_h = FullyConnected(hidden_size + input_size, hidden_size)
-        self.FC_y = FullyConnected(hidden_size, output_size)
-        self.gradient_weights_n = np.zeros((self.hidden_size + self.input_size + 1, self.hidden_size))
-        self.weights_y = None
-        self.weights_h = None
-        self.weights = self.FC_h.weights
-        self.tan_h = TanH()
-        self.bptt = 0
-        self.h_t = None
-        self.prev_h_t = None
-        self._optimizer = None
+        self.memorize = False
+        self.hidden_state = np.zeros(self.hidden_size)
+
+        self.tanh = TanH()
+        self.sigmoid = Sigmoid()
+        self.optimizer = None
+        self.grad_wt_1 = None
+        self.grad_wt_2 = None
+        self.FC_1 = FullyConnected(self.hidden_size + self.input_size, self.hidden_size)
+        self.FC_2 = FullyConnected(self.hidden_size, self.output_size)
+
+        self.FC1_cache = []
+        self.FC2_cache = []
+        self.Sig_cache = []
+        self.TanH_cache = []
+
+        self.batch_size = None
+        self.output_t = None
 
     def forward(self, input_tensor):
-        self.input_tensor = input_tensor
-        batch_size = input_tensor.shape[0]
-        if self._memorize:
-            if self.h_t is None:
-                self.h_t = np.zeros((batch_size + 1, self.hidden_size))
-            else:
-                self.h_t[0] = self.prev_h_t
-        else:
-            self.h_t = np.zeros((batch_size + 1, self.hidden_size))
+        self.batch_size = len(input_tensor)
+        self.output_t = np.zeros((self.batch_size, self.output_size))
+        if not self.memorize:
+            self.hidden_state = np.zeros(self.hidden_size)
 
-        y_t = np.zeros((batch_size, self.output_size))
+        for i in range(len(input_tensor)):
+            new_input = np.concatenate((self.hidden_state.reshape(self.hidden_size, 1), input_tensor[i].reshape(input_tensor.shape[1], 1)))
+            FC_1_f = self.FC_1.forward(new_input.T)
+            self.FC1_cache.append(self.FC_1.input_tensor)
 
-        # concatenating x, ht-1 and 1 to do forwarding to obtain new hidden state ht
-        # 1: for t from 1 to T do:
-        # 2:    ut = W hh · h t − 1 + W xh · x t + b h --> h t = tanh (x̃ t · W h )
-        # 3:    h t = tanh ( u t )
-        # 4:    o t = W hy · h t + b y
-        # 5:    ŷ t = σ( o t )
+            self.hidden_state = self.tanh.forward(FC_1_f)
+            self.TanH_cache.append(self.tanh.activation)
 
-        for b in range(batch_size):
-            # x̃_t:
-            x_hat = np.hstack((self.h_t[b][np.newaxis, :], input_tensor[b][np.newaxis, :]))
-            w_t = self.FC_h.forward(x_hat)
-            # h_t = tanh (x̃_t · W_h )
-            self.h_t[b + 1] = TanH().forward(w_t)
-            y_t[b] = self.FC_y.forward(self.h_t[b + 1][np.newaxis, :])
+            FC_2_f = self.FC_2.forward(self.hidden_state)
+            self.FC2_cache.append(self.FC_2.input_tensor)
 
-        self.prev_h_t = self.h_t[-1]
-        return y_t
+            self.output_t[i,:] = self.sigmoid.forward(FC_2_f)
+            self.Sig_cache.append(self.sigmoid.activation)
+
+        return self.output_t
 
     def backward(self, error_tensor):
-        batch_size = error_tensor.shape[0]
+        prev_error_tensor = np.zeros((self.batch_size, self.input_size))
+        hidden_number = np.zeros(self.hidden_size)
+        self.grad_wt_1 = 0
+        self.grad_wt_2 = 0
 
-        grad_err = np.zeros((batch_size, self.input_size))
+        for i in range(self.batch_size-1, -1, -1):
+            self.sigmoid.activation = self.Sig_cache[i]
+            temp_1 = self.sigmoid.backward(error_tensor[i])
 
-        grad_weights_y = np.zeros((self.hidden_size + 1, self.output_size))
-        grad_weights_h = np.zeros((self.hidden_size + self.input_size + 1, self.hidden_size))
+            self.FC_2.input_tensor = self.FC2_cache[i]
+            fc_2 = self.FC_2.backward(temp_1)
+            self.grad_wt_2 += self.FC_2.gradient_weights
 
-        count = 0
+            sum = fc_2 + hidden_number
 
-        grad_tanh = 1 - self.h_t[1::] ** 2
-        hidden_error = np.zeros((1, self.hidden_size))
+            self.tanh.activation = self.TanH_cache[i]
+            fc_1 = self.tanh.backward(sum)
 
-        # 1: for t from 1 to T do:
-        # 2:    Run RNN for one step, computing h_t and y_t
-        # 3:    if t mod k_1 == 0:
-        # 4:        Run BPTT from t down to t-k_2
-        for b in reversed(range(batch_size)):
-            yh_error = self.FC_y.backward(error_tensor[b][np.newaxis, :])
-            self.FC_y.input_tensor = np.hstack((self.h_t[b + 1], 1))[np.newaxis, :]
+            self.FC_1.input_tensor = self.FC1_cache[i]
+            temp_4 = self.FC_1.backward(fc_1)
+            self.grad_wt_1 += self.FC_1.gradient_weights
 
-            grad_yh = hidden_error + yh_error
-            grad_hidden = grad_tanh[b] * grad_yh
-            xh_error = self.FC_h.backward(grad_hidden)
-            hidden_error = xh_error[:, 0:self.hidden_size]
-            x_error = xh_error[:, self.hidden_size:(self.hidden_size + self.input_size + 1)]
-            grad_err[b] = x_error
+            prev_error_tensor[i,:] = np.squeeze(np.split(temp_4.T, [self.hidden_size])[1])
+            hidden_number = np.squeeze(temp_4.T[0:self.hidden_size])
 
-            con = np.hstack((self.h_t[b], self.input_tensor[b], 1))
-            self.FC_h.input_tensor = con[np.newaxis, :]
-            if count <= self.bptt:
-                self.weights_y = self.FC_y.weights
-                self.weights_h = self.FC_h.weights
-                grad_weights_y = self.FC_y.gradient_weights
-                grad_weights_h = self.FC_h.gradient_weights
-            count += 1
+        self.grad_wt_1 = np.asarray(self.grad_wt_1)
+        self.grad_wt_2 = np.asarray(self.grad_wt_2)
 
-        if self._optimizer is not None:
-            self.weights_y = self._optimizer.calculate_update(self.weights_y, grad_weights_y)
-            self.weights_h = self._optimizer.calculate_update(self.weights_h, grad_weights_h)
-            self.FC_y.weights = self.weights_y
-            self.FC_h.weights = self.weights_h
-        return grad_err
+        self.weights = self.FC_1.weights
+
+        if self.optimizer is not None:
+            self.FC_1.weights = self.optimizer.calculate_update(self.FC_1.weights, self.grad_wt_1)
+            self.FC_2.weights = self.optimizer.calculate_update(self.FC_2.weights, self.grad_wt_2)
+
+        return prev_error_tensor
+
+    @property
+    def gradient_weights(self):
+        return self.grad_wt_1
+
+    @gradient_weights.setter
+    def gradient_weights(self, grad_weights):
+        self.grad_wt_1 = grad_weights
+
+    @property
+    def weights(self):
+        return self.FC_1.weights
+
+    @weights.setter
+    def weights(self, weights):
+        self.FC_1.weights = weights
 
     @property
     def optimizer(self):
@@ -109,6 +115,11 @@ class RNN(Base.BaseLayer):
     def optimizer(self, opt):
         self._optimizer = copy.deepcopy(opt)
 
+    def initialize(self, weights_initializer, bias_initializer):
+        if weights_initializer is not None and bias_initializer is not None:
+            self.FC_1.initialize(weights_initializer, bias_initializer)
+            self.FC_2.initialize(weights_initializer, bias_initializer)
+
     @property
     def memorize(self):
         return self._memorize
@@ -117,22 +128,4 @@ class RNN(Base.BaseLayer):
     def memorize(self, x):
         self._memorize = x
 
-    def initialize(self, weights_initializer, bias_initializer):
-        self.weights_y = self.FC_y.initialize(weights_initializer, bias_initializer)
-        self.weights_h = self.FC_h.initialize(weights_initializer, bias_initializer)
 
-    @property
-    def weights(self):
-        return self._weights
-
-    @weights.setter
-    def weights(self, weights):
-        self._weights = weights
-
-    @property
-    def gradient_weights(self):
-        return self.gradient_weights_n
-
-    @gradient_weights.setter
-    def gradient_weights(self, grad_weights):
-        self.FC_y.gradient_weights = grad_weights
