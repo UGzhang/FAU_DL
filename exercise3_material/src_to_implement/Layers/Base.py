@@ -3,9 +3,9 @@ import math
 
 
 class BaseLayer:
-    def __init__(self):
+    def __init__(self, testing_phase=False):
         self.trainable = False
-        self.testing_phase = False
+        self.testing_phase = testing_phase
 
     def forward(self, input_tensor):
         return 0

@@ -7,6 +7,7 @@ class Dropout(BaseLayer):
         super().__init__()
         self.prob = prob
         self.mask = None
+        self.weights = 0
 
     def forward(self, input_tensor):
         # test

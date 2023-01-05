@@ -6,6 +6,7 @@ class ReLU(BaseLayer):
     def __init__(self):
         super().__init__()
         self._x = None
+        self.weights = 0
 
     '''
     x = x > 0 ? x : 0

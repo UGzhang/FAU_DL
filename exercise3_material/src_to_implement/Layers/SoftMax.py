@@ -6,6 +6,7 @@ class SoftMax(BaseLayer):
     def __init__(self):
         super().__init__()
         self.y_hat = None
+        self.weights = 0
 
     '''
     input_tensor:

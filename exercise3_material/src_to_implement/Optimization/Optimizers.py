@@ -11,7 +11,7 @@ class Optimizer:
 
 
 class Sgd(Optimizer):
-    def __init__(self, lr: float):
+    def __init__(self, lr):
         super().__init__()
         self._lr = lr
 
