@@ -15,7 +15,7 @@ class ResNet(nn.Module):
             ResBlocks(64, 128, 2),
             ResBlocks(128, 256, 2),
             ResBlocks(256, 512, 2),
-            AdaptiveMaxPool2d(),
+            AdaptiveMaxPool2d(512),
             Flatten(),
             Linear(512, 2),
             Sigmoid()

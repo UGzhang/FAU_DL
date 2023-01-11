@@ -10,12 +10,12 @@ from sklearn.model_selection import train_test_split
 
 # load the data from the csv file and perform a train-test-split
 # this can be accomplished using the already imported pandas and sklearn.model_selection modules
-dataset = pd.read_csv('data.csv', sep=',')
-train_data, val_data = train_test_split(dataset,test_size=0.3)
+dataset = pd.read_csv('data.csv', sep=';')
+train_dataset, val_dataset = train_test_split(dataset,train_size=0.8)
 
 # set up data loading for the training and validation set each using t.utils.data.DataLoader and ChallengeDataset objects
-train_dataset = t.utils.data.DataLoader(ChallengeDataset(train_data, 'train'), batch_size=32, shuffle = True)
-val_dataset = t.utils.data.DataLoader(ChallengeDataset(val_data, 'val'), batch_size=32)
+train_dataset = t.utils.data.DataLoader(ChallengeDataset(train_dataset, 'train'), batch_size=16)
+val_dataset = t.utils.data.DataLoader(ChallengeDataset(val_dataset, 'val'), batch_size=16)
 
 # create an instance of our ResNet model
 resnet = model.ResNet()
@@ -27,7 +27,7 @@ crit = t.nn.BCELoss()
 optimizer = t.optim.Adam(resnet.parameters(), lr=1e-4, weight_decay=1e-5)
 trainer = Trainer(
     model=resnet, crit=crit, optim=optimizer,
-    train_dl=train_data,val_test_dl=val_data,
+    train_dl=train_dataset,val_test_dl=val_dataset,
     cuda=False)
 
 # go, go, go... call fit on trainer

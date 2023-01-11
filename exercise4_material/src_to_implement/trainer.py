@@ -131,7 +131,15 @@ class Trainer:
             train_loss.append(self.train_epoch())
             val_loss.append(self.val_test())
             self.save_checkpoint(epoch)
-            if 
+
+            if self._early_stopping_patience > 0:
+                if len(val_loss) > self._early_stopping_patience:
+                    if val_loss[-1] > val_loss[-self._early_stopping_patience]:
+                        break
+
+            epoch += 1
+        return train_loss, val_loss
+
 
 
 
