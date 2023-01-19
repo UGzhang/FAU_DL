@@ -57,6 +57,8 @@ class RNN(BaseLayer):
     def backward(self, error_tensor):
         prev_err = np.zeros((self.batch_size, self.input_size))
         hidden_err = np.zeros(self.hidden_size)
+
+        # add all the loss of previous layer
         self.grad_weight1 = 0
         self.grad_weight2 = 0
 
@@ -80,6 +82,7 @@ class RNN(BaseLayer):
 
         self.weights = self.FC1.weights
 
+        # update the previous loss into fully connected layer
         if self.optimizer is not None:
             self.FC1.weights = self.optimizer.calculate_update(self.FC1.weights, self.grad_weight1)
             self.FC2.weights = self.optimizer.calculate_update(self.FC2.weights, self.grad_weight2)
