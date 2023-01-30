@@ -14,8 +14,8 @@ dataset = pd.read_csv('data.csv', sep=';')
 train_dataset, val_dataset = train_test_split(dataset,train_size=0.8)
 
 # set up data loading for the training and validation set each using t.utils.data.DataLoader and ChallengeDataset objects
-train_dataset = t.utils.data.DataLoader(ChallengeDataset(train_dataset, 'train'), batch_size=16)
-val_dataset = t.utils.data.DataLoader(ChallengeDataset(val_dataset, 'val'), batch_size=16)
+train_dataset = t.utils.data.DataLoader(ChallengeDataset(train_dataset, 'train'), batch_size=64)
+val_dataset = t.utils.data.DataLoader(ChallengeDataset(val_dataset, 'val'), batch_size=64)
 
 # create an instance of our ResNet model
 resnet = model.ResNet()
@@ -31,7 +31,7 @@ trainer = Trainer(
     cuda=False)
 
 # go, go, go... call fit on trainer
-res = trainer.fit(100)
+res = trainer.fit(10)
 
 # plot the results
 plt.plot(np.arange(len(res[0])), res[0], label='train loss')

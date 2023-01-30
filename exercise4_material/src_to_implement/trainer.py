@@ -62,7 +62,7 @@ class Trainer:
         loss = self._crit(pred, y)
         loss.backward()
         self._optim.step()
-        return loss
+        return loss.item()
         
     
     def val_test_step(self, x, y):
@@ -86,7 +86,7 @@ class Trainer:
                 x = x.cuda()
                 y = y.cuda()
             loss += self.train_step(x, y)
-            return loss / len(self._train_dl)
+        return loss / len(self._train_dl)
 
     def val_test(self):
         # set eval mode. Some layers have different behaviors during training and testing (for example: Dropout, BatchNorm, etc.). To handle those properly, you'd want to call model.eval()
@@ -116,8 +116,8 @@ class Trainer:
     def fit(self, epochs=-1):
         assert self._early_stopping_patience > 0 or epochs > 0
         # create a list for the train and validation losses, and create a counter for the epoch 
-        train_loss = []
-        val_loss = []
+        train_loss_list = []
+        val_loss_list = []
         epoch = 0
         while True:
             # stop by epoch number
@@ -126,19 +126,21 @@ class Trainer:
             # use the save_checkpoint function to save the model (can be restricted to epochs with improvement)
             # check whether early stopping should be performed using the early stopping criterion and stop if so
             # return the losses for both training and validation
-            if epoch == epochs:
+            if epoch > epochs:
                 break
-            train_loss.append(self.train_epoch())
-            val_loss.append(self.val_test())
+            train_loss = self.train_epoch()
+            train_loss_list.append(train_loss)
+            val_loss = self.val_test()
+            val_loss_list.append(val_loss)
+            epoch += 1
             self.save_checkpoint(epoch)
 
             if self._early_stopping_patience > 0:
-                if len(val_loss) > self._early_stopping_patience:
-                    if val_loss[-1] > val_loss[-self._early_stopping_patience]:
+                if len(val_loss_list) > self._early_stopping_patience:
+                    if val_loss_list[-1] > val_loss_list[-self._early_stopping_patience]:
                         break
 
-            epoch += 1
-        return train_loss, val_loss
+        return train_loss_list, val_loss_list
 
 
 
