@@ -1,6 +1,7 @@
 import torch as t
 from sklearn.metrics import f1_score
 from tqdm.autonotebook import tqdm
+import numpy as np
 
 
 class Trainer:
@@ -69,9 +70,13 @@ class Trainer:
         # predict
         # propagate through the network and calculate the loss and predictions
         # return the loss and the predictions
-        pred = self._model(x)
-        loss = self._crit(pred, y)
-        return loss, pred
+        out = self._model(x)
+        loss = self._crit(out, y)
+        out = out.detach().cpu().numpy()
+        pred_0 = np.array(out[:, 0] > 0.5).astype(int)
+        pred_1 = np.array(out[:, 1] > 0.5).astype(int)
+        pred = np.stack([pred_0, pred_1], axis=1)
+        return loss.item(), pred
         
     def train_epoch(self):
         # set training mode
@@ -107,10 +112,12 @@ class Trainer:
                     x = x.cuda()
                     y = y.cuda()
                 batch_loss, pred = self.val_test_step(x, y)
-                pred_labels.append(pred)
-                y_labels.append(y)
+                pred_labels.extend(pred)
+                y_labels.extend(y.numpy())
                 loss += batch_loss
-        return loss / len(self._val_test_dl)
+            preds, labels = np.array(pred_labels), np.array(y_labels)
+            score = f1_score(preds, labels, average='micro')
+        return loss / len(self._val_test_dl), score
 
 
     def fit(self, epochs=-1):
@@ -130,7 +137,7 @@ class Trainer:
                 break
             train_loss = self.train_epoch()
             train_loss_list.append(train_loss)
-            val_loss = self.val_test()
+            val_loss, score = self.val_test()
             val_loss_list.append(val_loss)
             epoch += 1
             self.save_checkpoint(epoch)
@@ -139,7 +146,7 @@ class Trainer:
                 if len(val_loss_list) > self._early_stopping_patience:
                     if val_loss_list[-1] > val_loss_list[-self._early_stopping_patience]:
                         break
-
+            print('Score: %.4f'%(score))
         return train_loss_list, val_loss_list
 
 

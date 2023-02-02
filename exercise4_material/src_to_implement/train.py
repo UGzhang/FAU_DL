@@ -31,7 +31,7 @@ trainer = Trainer(
     cuda=False)
 
 # go, go, go... call fit on trainer
-res = trainer.fit(10)
+res = trainer.fit(50)
 
 # plot the results
 plt.plot(np.arange(len(res[0])), res[0], label='train loss')
