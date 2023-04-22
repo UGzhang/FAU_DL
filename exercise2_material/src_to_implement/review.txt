@@ -1,0 +1,18 @@
+SGD with momentum:  is method which helps accelerate gradients vectors in the right directions, thus leading to faster converging
+
+Adam:it is a combination of the ‘gradient descent with momentum’ algorithm and the ‘RMSP’ algorithm. 
+RMSP: This allows the learning rate to adapt over time
+advantage: it reaches the global minimum while taking big enough steps (step-size) so as to pass the local minima hurdles along the way. Hence, combining the features of the above methods to reach the global minimum efficiently. 
+
+CNN:
+extract the feature
+padding: get the same size of the input size
+Strided: Reducesthesize
+1×1Conv: reduce the dimension(reduce redundancy in your featuremaps)
+
+Pooling Layers: 
+Fuses information of input
+Decreases number of parameters
+Maximum pooling adds additional non-linearity
+
+backward: keep the size with the input martrix, find the max position and max value, and others set 0
