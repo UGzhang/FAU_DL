@@ -1,9 +1,4 @@
-# Revisit the coure
-## 1. Feed Forward Netward
-- percetron
-- universal approximation theorem
-## 2. Back propagation Netwark
-- derivation
-
+### Introduction
+This is the source code repository of <br>Deep Learning<br> course at FAU in WS2022/23.
 
 
